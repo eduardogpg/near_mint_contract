@@ -16,7 +16,7 @@ cargo build --target wasm32-unknown-unknown --release
 near login
 ```
 
-Set environment $ID
+Set environments $ID
 
 ```
 export ID=<username>.testnet
@@ -32,8 +32,6 @@ Initiaize the contract.
 near call $ID new_default_meta '{"owner_id": "'$ID'", "name": "<Name>", "symbol": "<Symbol>"}' --accountId $ID
 ```
 
-Mint the custome NFT!
-
 ```
-near call $ID nft_mint '{"token_id": "0", "receiver_id": "'$ID'", "token_metadata": '"`cat token.json`}" --accountId $ID --deposit 0.1
+near call $ID nft_mint '{"token_id": "0", "receiver_id": "'$ID'", "title": "Simple NFT Title", "description": "Simple NFT Description", "media": "https://bafkreibgkz7xlvik7sdbu6jow2qmdvdyle5k3q3tjagjt2muyalae4wc7a.ipfs.nftstorage.link/", "hash": "JlZ/ddUK/IYaeS62oMHUeFk6rcNzSAyZ6ZTAFgJywvg=" }'  --accountId $ID --deposit 0.1
 ```

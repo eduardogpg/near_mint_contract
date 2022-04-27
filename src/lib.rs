@@ -1,3 +1,7 @@
+// DOCUMENTATION
+// NEP - 177 Standar
+
+
 use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
 };
@@ -5,9 +9,12 @@ use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_contract_standards::non_fungible_token::NonFungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
+
+use near_sdk::json_types::Base64VecU8;
 use near_sdk::json_types::ValidAccountId;
+
 use near_sdk::{
-    env, near_bindgen, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
+    env, near_bindgen, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,  
 };
 
 near_sdk::setup_alloc!();
@@ -51,7 +58,7 @@ impl Contract {
 
     #[init]
     pub fn new(owner_id: ValidAccountId, metadata: NFTContractMetadata) -> Self {
-        assert!(!env::state_exists(), "Already initialized");
+        assert!(!env::state_exists(), "Contract already initialized");
         metadata.assert_valid();
         Self {
             tokens: NonFungibleToken::new(
@@ -66,8 +73,28 @@ impl Contract {
     }
     
     #[payable]
-    pub fn nft_mint(&mut self, token_id: TokenId, receiver_id: ValidAccountId, token_metadata: TokenMetadata) -> Token {
+    pub fn nft_mint(&mut self, token_id: TokenId, receiver_id: ValidAccountId, 
+        title: String, description: String, media: String, hash: Base64VecU8) -> Token {
+
+        let token_metadata = self.generate_token_meta_data(title, description, media, hash);
         self.tokens.mint(token_id, receiver_id, Some(token_metadata))
+    }
+
+    pub fn generate_token_meta_data(&self, title: String, description: String, media: String, hash: Base64VecU8) -> TokenMetadata{
+        TokenMetadata {
+            title: Some(title),
+            description: Some(description),
+            media: Some(media),
+            media_hash: Some(hash),
+            copies: Some(1),
+            issued_at: None,
+            expires_at: None,
+            starts_at: None,
+            updated_at: None,
+            extra: None, 
+            reference: None,
+            reference_hash: None 
+        }
     }
 }
 
@@ -85,8 +112,6 @@ impl NonFungibleTokenMetadataProvider for Contract {
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
-    use near_sdk::testing_env;
-
     use super::*;
 
     const MINT_STORAGE_COST: u128 = 5870000000000000000000;
