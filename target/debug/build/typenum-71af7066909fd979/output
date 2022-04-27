@@ -1,2 +1,0 @@
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/home/eduardo/projects/near_projects/custome-nft/target/debug/build/typenum-71af7066909fd979/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/home/eduardo/projects/near_projects/custome-nft/target/debug/build/typenum-71af7066909fd979/out/op.rs
