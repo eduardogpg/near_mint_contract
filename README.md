@@ -36,10 +36,10 @@ Initiaize the contract.
 near call $ID new_default_meta '{"owner_id": "'$ID'", "name": "<Name>", "symbol": "<Symbol>"}' --accountId $ID
 ```
 
-### Example
+### Deploy Example
 
 ```
-near call $ID new_default_meta '{"owner_id": "'$ID'", "name": "Flower", "symbol": "CTX"}' --accountId $ID
+near call $ID new '{"owner_id": "'$ID'", "name": "Flower", "symbol": "CTX"}' --accountId $ID
 ```
 
 ```

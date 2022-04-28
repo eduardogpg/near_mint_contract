@@ -22,7 +22,7 @@ near_sdk::setup_alloc!();
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    tokens: NonFungibleToken,
+    token: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
 }
 
@@ -41,66 +41,57 @@ enum StorageKey {
 impl Contract {
     
     #[init]
-    pub fn new_default_meta(owner_id: ValidAccountId, name: String, symbol: String) -> Self {
-        Self::new(
-            owner_id,
-            NFTContractMetadata {
-                spec: NFT_METADATA_SPEC.to_string(),
-                name: name,
-                symbol: symbol,
-                icon: Some(ICON.to_string()),
-                base_uri: Some("https://nft.storage/".to_string()),
-                reference: None,
-                reference_hash: None,
-            },
-        )
-    }
-
-    #[init]
-    pub fn new(owner_id: ValidAccountId, metadata: NFTContractMetadata) -> Self {
-        assert!(!env::state_exists(), "Contract already initialized");
-        metadata.assert_valid();
+    pub fn new(owner_id: ValidAccountId, name: String, symbol: String) -> Self {
         Self {
-            tokens: NonFungibleToken::new(
+            token: NonFungibleToken::new(
                 StorageKey::NonFungibleToken,
                 owner_id,
                 Some(StorageKey::TokenMetadata),
                 Some(StorageKey::Enumeration),
-                Some(StorageKey::Approval),
-            ),
-            metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
+                Some(StorageKey::Approval)
+             ),
+             metadata: LazyOption::new(
+                StorageKey::Metadata,
+                Some(&NFTContractMetadata {
+                    spec: NFT_METADATA_SPEC.to_string(),
+                    name: name,
+                    symbol: symbol,
+                    icon: Some(ICON.to_string()),
+                    base_uri: Some("https://nft.storage/".to_string()),
+                    reference: None,
+                    reference_hash: None,
+                 })
+             ),
         }
     }
     
     #[payable]
-    pub fn nft_mint(&mut self, token_id: TokenId, receiver_id: ValidAccountId, 
-        title: String, description: String, media: String, hash: Base64VecU8) -> Token {
-
-        let token_metadata = self.generate_token_meta_data(title, description, media, hash);
-        self.tokens.mint(token_id, receiver_id, Some(token_metadata))
-    }
-
-    pub fn generate_token_meta_data(&self, title: String, description: String, media: String, hash: Base64VecU8) -> TokenMetadata{
-        TokenMetadata {
-            title: Some(title),
-            description: Some(description),
-            media: Some(media),
-            media_hash: Some(hash),
-            copies: Some(1),
-            issued_at: None,
-            expires_at: None,
-            starts_at: None,
-            updated_at: None,
-            extra: None, 
-            reference: None,
-            reference_hash: None 
-        }
+    pub fn nft_mint(&mut self, token_id: TokenId, receiver_id: ValidAccountId, title: String, description: String, media: String, hash: Base64VecU8) -> Token {
+        let token_metadata = generate_token_meta_data(title, description, media, hash);
+        self.token.mint(token_id, receiver_id, Some(token_metadata))
     }
 }
 
-near_contract_standards::impl_non_fungible_token_core!(Contract, tokens);
-near_contract_standards::impl_non_fungible_token_approval!(Contract, tokens);
-near_contract_standards::impl_non_fungible_token_enumeration!(Contract, tokens);
+pub fn generate_token_meta_data(title: String, description: String, media: String, hash: Base64VecU8) -> TokenMetadata{
+    TokenMetadata {
+        title: Some(title),
+        description: Some(description),
+        media: Some(media),
+        media_hash: Some(hash),
+        copies: Some(1),
+        issued_at: None,
+        expires_at: None,
+        starts_at: None,
+        updated_at: None,
+        extra: None, 
+        reference: None,
+        reference_hash: None 
+    }
+}
+
+near_contract_standards::impl_non_fungible_token_core!(Contract, token);
+near_contract_standards::impl_non_fungible_token_approval!(Contract, token);
+near_contract_standards::impl_non_fungible_token_enumeration!(Contract, token);
 
 #[near_bindgen]
 impl NonFungibleTokenMetadataProvider for Contract {
