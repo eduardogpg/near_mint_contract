@@ -34,9 +34,10 @@ enum StorageKey {
 
 #[near_bindgen]
 impl Contract {
-    
     #[init]
     pub fn new(owner_id: ValidAccountId, name: String, symbol: String) -> Self {
+        assert!(!env::state_exists(), "Already initialized");
+
         Self {
             token: NonFungibleToken::new(
                 StorageKey::NonFungibleToken,
@@ -44,8 +45,8 @@ impl Contract {
                 Some(StorageKey::TokenMetadata),
                 Some(StorageKey::Enumeration),
                 Some(StorageKey::Approval)
-             ),
-             metadata: LazyOption::new(
+            ),
+            metadata: LazyOption::new(
                 StorageKey::Metadata,
                 Some(&NFTContractMetadata {
                     spec: NFT_METADATA_SPEC.to_string(),
@@ -55,8 +56,9 @@ impl Contract {
                     base_uri: Some("https://nft.storage/".to_string()),
                     reference: None,
                     reference_hash: None,
-                 })
-             ),
+                    }
+                )
+            ),
         }
     }
     
@@ -84,6 +86,7 @@ pub fn generate_token_meta_data(title: String, description: String, media: Strin
     }
 }
 
+// Mandatories lines to implement Standar NEP-171 NFT!
 near_contract_standards::impl_non_fungible_token_core!(Contract, token);
 near_contract_standards::impl_non_fungible_token_approval!(Contract, token);
 near_contract_standards::impl_non_fungible_token_enumeration!(Contract, token);
@@ -99,11 +102,15 @@ impl NonFungibleTokenMetadataProvider for Contract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use near_sdk::VMContext;
+    use near_sdk::MockedBlockchain;
+    use near_sdk::{testing_env, VMContext};
+    use near_sdk::json_types::ValidAccountId;
 
-    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
+    use std::convert::TryInto;
+
+    fn get_context(current_account_id: String, input: Vec<u8>, is_view: bool) -> VMContext {
         VMContext {
-            current_account_id: "alice.testnet".to_string(),
+            current_account_id: current_account_id,
             signer_account_id: "robert.testnet".to_string(),
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id: "jane.testnet".to_string(),
@@ -120,5 +127,59 @@ mod tests {
             output_data_receivers: vec![],
             epoch_height: 19,
         }
+    }
+
+    #[test]
+    fn validate_owner() {
+        let current_account_id = String::from("eduardogpg.testnet");
+        let context = get_context(current_account_id, vec![], false);
+        testing_env!(context);
+    }
+    
+    #[test]
+    fn validate_token_metadata() { // https://docs.rs/near-contract-standards/3.2.0/near_contract_standards/non_fungible_token/metadata/struct.TokenMetadata.html
+        let title = String::from("NFT Title");
+        let description = String::from("NFT Description");
+        let media = String::from("NFT Media");
+        let hash = Base64VecU8::from( media.as_bytes().to_vec() );
+
+        let token_metadata =  generate_token_meta_data(title, description, media, hash);
+
+        assert_eq!(String::from("NFT Title"), token_metadata.title.unwrap());
+        assert_eq!(String::from("NFT Description"), token_metadata.description.unwrap());
+        assert_eq!(String::from("NFT Media"), token_metadata.media.unwrap());
+    }
+
+    #[test]
+    fn validate_token_metadata_copies() {
+        let title = String::from("NFT Title");
+        let description = String::from("NFT Description");
+        let media = String::from("NFT Media");
+        let hash = Base64VecU8::from( media.as_bytes().to_vec() );
+
+        let token_metadata =  generate_token_meta_data(title, description, media, hash);
+
+        assert_eq!(1, token_metadata.copies.unwrap());
+    }
+    
+    #[test]
+    fn validate_non_fungible_token() {
+        let owner_id: ValidAccountId = "eduardogpg.testnet".try_into().unwrap();
+        assert_eq!("eduardogpg.testnet", owner_id.to_string());
+    }
+    
+    #[test]
+    fn validate_contract_owner() {
+        let current_account_id = String::from("eduardogpg.testnet");
+        let context = get_context(current_account_id, vec![], false);
+        testing_env!(context);
+
+        let symbol = String::from("WEL");
+        let name = String::from("Welcome");
+        let owner_id: ValidAccountId = "eduardogpg.testnet".try_into().unwrap();
+
+        let contract = Contract::new(owner_id, name, symbol);
+        
+        assert_eq!("eduardogpg.testnet", contract.token.owner_id.to_string());
     }
 }
