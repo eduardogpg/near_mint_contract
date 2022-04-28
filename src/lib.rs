@@ -2,9 +2,7 @@
 // NEP - 177 Standar
 // DOC: https://nomicon.io/Standards/Tokens/NonFungibleToken/Metadata
 
-use near_contract_standards::non_fungible_token::metadata::{
-    NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
-};
+use near_contract_standards::non_fungible_token::metadata::{NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC };
 use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_contract_standards::non_fungible_token::NonFungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
@@ -12,10 +10,7 @@ use near_sdk::collections::LazyOption;
 
 use near_sdk::json_types::Base64VecU8;
 use near_sdk::json_types::ValidAccountId;
-
-use near_sdk::{
-    env, near_bindgen, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,  
-};
+use near_sdk::{env, near_bindgen, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue};
 
 near_sdk::setup_alloc!();
 
@@ -93,6 +88,7 @@ near_contract_standards::impl_non_fungible_token_core!(Contract, token);
 near_contract_standards::impl_non_fungible_token_approval!(Contract, token);
 near_contract_standards::impl_non_fungible_token_enumeration!(Contract, token);
 
+
 #[near_bindgen]
 impl NonFungibleTokenMetadataProvider for Contract {
     fn nft_metadata(&self) -> NFTContractMetadata {
@@ -100,38 +96,29 @@ impl NonFungibleTokenMetadataProvider for Contract {
     }
 }
 
-#[cfg(all(test, not(target_arch = "wasm32")))]
+#[cfg(test)]
 mod tests {
-    use near_sdk::test_utils::{accounts, VMContextBuilder};
     use super::*;
+    use near_sdk::VMContext;
 
-    const MINT_STORAGE_COST: u128 = 5870000000000000000000;
-
-    fn get_context(predecessor_account_id: ValidAccountId) -> VMContextBuilder {
-        let mut builder = VMContextBuilder::new();
-        builder
-            .current_account_id(accounts(0))
-            .signer_account_id(predecessor_account_id.clone())
-            .predecessor_account_id(predecessor_account_id);
-        builder
-    }
-
-    fn sample_token_metadata() -> TokenMetadata {
-        TokenMetadata {
-            title: Some("Welcome NFT".into()),
-            description: Some("First NFT Team N°2".into()),
-            media: None,
-            media_hash: None,
-            copies: Some(1u64),
-            issued_at: None,
-            expires_at: None,
-            starts_at: None,
-            updated_at: None,
-            extra: None,
-            reference: None,
-            reference_hash: None,
+    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
+        VMContext {
+            current_account_id: "alice.testnet".to_string(),
+            signer_account_id: "robert.testnet".to_string(),
+            signer_account_pk: vec![0, 1, 2],
+            predecessor_account_id: "jane.testnet".to_string(),
+            input,
+            block_index: 0,
+            block_timestamp: 0,
+            account_balance: 0,
+            account_locked_balance: 0,
+            storage_usage: 0,
+            attached_deposit: 0,
+            prepaid_gas: 10u64.pow(18),
+            random_seed: vec![0, 1, 2],
+            is_view,
+            output_data_receivers: vec![],
+            epoch_height: 19,
         }
     }
-
-    
 }
