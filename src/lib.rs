@@ -1,6 +1,6 @@
 // DOCUMENTATION
 // NEP - 177 Standar
-
+// DOC: https://nomicon.io/Standards/Tokens/NonFungibleToken/Metadata
 
 use near_contract_standards::non_fungible_token::metadata::{
     NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
